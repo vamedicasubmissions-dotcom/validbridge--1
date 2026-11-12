@@ -9,6 +9,8 @@ Implements endpoints for:
 - AI Proactive Alerts query
 """
 
+import os
+import sys
 import json
 from decimal import Decimal
 from http.server import HTTPServer, BaseHTTPRequestHandler
