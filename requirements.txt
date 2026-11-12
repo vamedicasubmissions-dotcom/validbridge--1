@@ -1,0 +1,3 @@
+# ValidBridge Requirements
+# Pure standard library runtime with zero external dependencies needed
+# Python 3.10+ / 3.11 / 3.12 / 3.13

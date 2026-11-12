@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ValidBridge — High-Assurance Cross-Border Trade &amp; Escrow (validbridge.com)</title>
+  <style>
+    :root {
+      --primary: #1e40af;
+      --primary-hover: #1d4ed8;
+      --accent: #0284c7;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; padding: 24px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
+    .logo { font-size: 26px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+    .badge { background: #dbeafe; color: var(--primary); padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+    .zero-cost-banner { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px; }
+    .card h2 { font-size: 18px; margin-bottom: 16px; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .catalog-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; }
+    .item-title { font-weight: 600; font-size: 15px; }
+    .item-meta { font-size: 13px; color: var(--text-muted); }
+    button { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.15s; font-size: 13px; }
+    button:hover { background: var(--primary-hover); }
+    .state-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .state-INITIATED { background: #fef3c7; color: #b45309; }
+    .state-FUNDS_LOCKED { background: #e0e7ff; color: #3730a3; }
+    .state-INSPECTION_PENDING { background: #ede9fe; color: #5b21b6; }
+    .state-RELEASED { background: #dcfce7; color: #15803d; }
+    .state-DISPUTED { background: #fee2e2; color: #991b1b; }
+    .alert-box { padding: 12px; border-radius: 6px; font-size: 13px; margin-bottom: 10px; border-left: 4px solid var(--accent); background: #f0f9ff; }
+    .alert-title { font-weight: 700; margin-bottom: 2px; }
+    .qr-preview { text-align: center; margin-top: 16px; padding: 16px; background: #fafafa; border: 1px dashed var(--border); border-radius: 8px; }
+    .qr-preview img { max-width: 220px; height: auto; }
+    code { font-family: monospace; background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <div class="logo">VALID<span>BRIDGE</span></div>
+        <div style="font-size: 13px; color: var(--text-muted);">validbridge.com • Cryptographic Trust &amp; Escrow Infrastructure</div>
+      </div>
+      <span class="badge">EVM Smart Escrow • TLS 1.3 • Zero-Cost Browsing</span>
+    </header>
+
+    <div class="zero-cost-banner">
+      <strong>Zero-Cost Browsing Active:</strong> Pure read operations are routed to local read replicas. No third-party KYB, smart contract gas, or escrow fees are charged while browsing.
+    </div>
+
+    <div class="grid">
+      <!-- Main Workflows -->
+      <div>
+        <!-- Catalog Section -->
+        <div class="card">
+          <h2>1. Verified Product Catalog (Window Shopping)</h2>
+          <div id="catalog-list">Loading catalog items...</div>
+        </div>
+
+        <!-- Active Deal Room -->
+        <div class="card" id="deal-room" style="display: none;">
+          <h2>2. Active Deal Room &amp; Escrow State Machine</h2>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <div>Order: <strong id="order-num">-</strong></div>
+            <div>State: <span id="order-state" class="state-badge">-</span></div>
+          </div>
+          <div style="margin-bottom: 16px; font-size: 14px;">
+            Subtotal: <strong id="subtotal-val">$0.00</strong> | Platform Fee: <strong id="fee-val">$0.00</strong> | Total: <strong id="total-val">$0.00</strong>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="action-buttons">
+            <button id="btn-lock" onclick="lockFunds()">Lock Escrow Funds</button>
+            <button id="btn-dispatch" onclick="dispatchInspector()" style="display: none;">Dispatch Inspector</button>
+            <button id="btn-release" onclick="releaseFunds()" style="display: none;">Upload Proof &amp; Release Funds</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: AI Assistant & QRL Verification -->
+      <div>
+        <!-- AI Assistant -->
+        <div class="card">
+          <h2>Automated AI Assistant</h2>
+          <div id="ai-alerts">No active deal loaded. Click "Initiate Order" on any catalog item.</div>
+        </div>
+
+        <!-- QRL & QR Code Inspector Gateway -->
+        <div class="card" id="qr-card" style="display: none;">
+          <h2>Dynamic QRL &amp; Inspector QR</h2>
+          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+            Single-use cryptographic dispatch token (Ed25519 / HMAC-SHA256):
+          </div>
+          <div class="qr-preview">
+            <div id="qr-svg-container"></div>
+            <div style="margin-top: 8px; font-size: 11px; word-break: break-all;" id="qrl-link"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentOrder = null;
+    let inspectorToken = null;
+
+    async function loadCatalog() {
+      try {
+        const res = await fetch('/api/catalog');
+        const data = await res.json();
+        const container = document.getElementById('catalog-list');
+        container.innerHTML = data.items.map(item => `
+          <div class="catalog-item">
+            <div>
+              <div class="item-title">${item.title}</div>
+              <div class="item-meta">Supplier: <strong>${item.supplier_name}</strong> (${item.supplier_jurisdiction}) • MOQ: ${item.moq}</div>
+              <div style="font-weight: 700; color: var(--accent); margin-top: 4px;">$${item.unit_price_usd.toLocaleString()} / unit</div>
+            </div>
+            <button onclick="initiateOrder('${item.supplier_id}', ${item.unit_price_usd * item.moq})">Initiate Order</button>
+          </div>
+        `).join('');
+      } catch (e) {
+        document.getElementById('catalog-list').innerText = 'Ensure the server is running on localhost:8080.';
+      }
+    }
+
+    async function initiateOrder(supplierId, subtotal) {
+      const res = await fetch('/api/orders/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          buyer_id: 'buyer-org-nyc-01',
+          supplier_id: supplierId,
+          subtotal: subtotal.toFixed(2),
+          fee_percent: '2.00'
+        })
+      });
+      const data = await res.json();
+      currentOrder = data.order;
+      updateDealRoom();
+      loadAlerts();
+    }
+
+    function updateDealRoom() {
+      if (!currentOrder) return;
+      document.getElementById('deal-room').style.display = 'block';
+      document.getElementById('order-num').innerText = currentOrder.order_number;
+      
+      const stateBadge = document.getElementById('order-state');
+      stateBadge.className = 'state-badge state-' + currentOrder.state;
+      stateBadge.innerText = currentOrder.state;
+
+      document.getElementById('subtotal-val').innerText = '$' + parseFloat(currentOrder.fees.subtotal).toLocaleString();
+      document.getElementById('fee-val').innerText = '$' + parseFloat(currentOrder.fees.buyer_fee).toLocaleString();
+      document.getElementById('total-val').innerText = '$' + parseFloat(currentOrder.fees.buyer_payable).toLocaleString();
+
+      // Button controls
+      document.getElementById('btn-lock').style.display = currentOrder.state === 'INITIATED' ? 'inline-block' : 'none';
+      document.getElementById('btn-dispatch').style.display = currentOrder.state === 'FUNDS_LOCKED' ? 'inline-block' : 'none';
+      document.getElementById('btn-release').style.display = currentOrder.state === 'INSPECTION_PENDING' ? 'inline-block' : 'none';
+    }
+
+    async function lockFunds() {
+      const res = await fetch(`/api/orders/${currentOrder.id}/lock-funds`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_tx_ref: 'tx_demo_escrow_deposit' })
+      });
+      const data = await res.json();
+      currentOrder = data.order;
+      updateDealRoom();
+      loadAlerts();
+    }
+
+    async function dispatchInspector() {
+      const res = await fetch(`/api/orders/${currentOrder.id}/dispatch-inspector`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inspector_id: 'insp-sgs-tuv', inspection_window_hours: 48 })
+      });
+      const data = await res.json();
+      currentOrder = data.order;
+      inspectorToken = data.inspector_qr_token;
+      
+      updateDealRoom();
+      loadAlerts();
+
+      // Render Dynamic QR SVG
+      document.getElementById('qr-card').style.display = 'block';
+      document.getElementById('qrl-link').innerHTML = `<code>${inspectorToken.deep_link.substring(0, 50)}...</code>`;
+      
+      const qrRes = await fetch(`/api/qr/render?token=${encodeURIComponent(inspectorToken.token)}&title=INSPECTOR+ONE-TIME+DISPATCH`);
+      const svg = await qrRes.text();
+      document.getElementById('qr-svg-container').innerHTML = svg;
+    }
+
+    async function releaseFunds() {
+      const res = await fetch(`/api/orders/${currentOrder.id}/release-funds`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proof_sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+          digital_signature: 'ed25519_certified_inspection_report_pass',
+          inspector_id: 'insp-sgs-tuv'
+        })
+      });
+      const data = await res.json();
+      currentOrder = data.order;
+      updateDealRoom();
+      loadAlerts();
+    }
+
+    async function loadAlerts() {
+      if (!currentOrder) return;
+      const res = await fetch(`/api/orders/${currentOrder.id}/alerts`);
+      const data = await res.json();
+      const container = document.getElementById('ai-alerts');
+      container.innerHTML = data.active_alerts.map(a => `
+        <div class="alert-box">
+          <div class="alert-title">[${a.recipient_role}] ${a.title}</div>
+          <div>${a.message}</div>
+        </div>
+      `).join('');
+    }
+
+    loadCatalog();
+  </script>
+</body>
+</html>
